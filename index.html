@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EVG — 让网络适应你，而不是让你适应网络</title>
+<meta name="description" content="EVG 自部署多店铺网络环境管理系统。自动选择线路、断线自愈、IP 成本归零，一次买断永久使用。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --primary:#58a6ff;
+    --primary-deep:#2563eb;
+    --primary-soft:#0d2847;
+    --accent:#2563eb;
+    --success:#3fb950;
+    --bg:#0d1117;
+    --surface:#161b22;
+    --surface-2:#21262d;
+    --text:#f0f6fc;
+    --muted:#8b949e;
+    --border:#30363d;
+    --radius:16px;
+    --shadow:0 1px 3px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.35);
+    --maxw:1120px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:'Inter','HarmonyOS Sans','PingFang SC','Microsoft YaHei',system-ui,-apple-system,sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  .container{max-width:var(--maxw);margin:0 auto;padding:0 24px}
+  a{color:var(--primary);text-decoration:none}
+
+  /* Navigation */
+  .nav{
+    position:sticky;top:0;z-index:50;
+    background:rgba(13,17,23,.85);
+    backdrop-filter:saturate(180%) blur(20px);
+    border-bottom:1px solid var(--border);
+  }
+  .nav-inner{display:flex;align-items:center;justify-content:space-between;height:64px}
+  .logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:20px;letter-spacing:-.02em}
+  .logo-mark{
+    width:30px;height:30px;border-radius:9px;
+    background:linear-gradient(135deg,#2563eb,#7c3aed);
+    display:flex;align-items:center;justify-content:center;
+    color:#fff;font-size:15px;
+  }
+  .logo-sub{font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.02em}
+  .nav-links{display:flex;gap:28px;align-items:center;font-size:14px;font-weight:500}
+  .nav-links a{color:var(--muted);transition:color .2s}
+  .nav-links a:hover{color:var(--text)}
+  .nav-cta{
+    background:var(--primary);color:#fff;font-weight:600;font-size:14px;
+    padding:10px 20px;border-radius:999px;transition:background .2s,transform .15s;
+  }
+  .nav-cta:hover{background:#1d4ed8;transform:translateY(-1px)}
+  .hamburger{display:none;cursor:pointer;font-size:24px;background:none;border:none}
+
+  /* Hero */
+  .hero{position:relative;padding:88px 0 72px;overflow:hidden}
+  .hero-bg{
+    position:absolute;inset:0;z-index:0;pointer-events:none;
+    background:
+      radial-gradient(60% 50% at 20% 0%,rgba(37,99,235,.08),transparent 60%),
+      radial-gradient(50% 40% at 90% 10%,rgba(14,165,233,.07),transparent 60%);
+  }
+  .hero-grid{position:relative;z-index:1;display:grid;grid-template-columns:1.05fr .95fr;gap:56px;align-items:center}
+  .hero-eyebrow{
+    display:inline-flex;align-items:center;gap:8px;
+    font-size:13px;font-weight:600;color:var(--primary);
+    background:var(--primary-soft);border:1px solid #1f6feb33;
+    padding:6px 14px;border-radius:999px;margin-bottom:20px;
+  }
+  .hero-eyebrow .dot{width:7px;height:7px;border-radius:50%;background:var(--success);display:inline-block}
+  .hero h1{font-size:56px;line-height:1.1;font-weight:800;letter-spacing:-.03em;margin-bottom:20px;color:var(--text)}
+  .hero h1 .gradient{background:linear-gradient(90deg,#2563eb,#7c3aed);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .hero-sub{font-size:18px;color:var(--muted);max-width:520px;margin-bottom:36px}
+  .hero-ctas{display:flex;gap:14px;flex-wrap:wrap}
+  .btn{display:inline-flex;align-items:center;gap:8px;font-weight:600;font-size:16px;padding:14px 28px;border-radius:999px;transition:transform .15s,box-shadow .2s,background .2s}
+  .btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(37,99,235,.2)}
+  .btn-primary{background:var(--primary);color:#fff}
+  .btn-primary:hover{background:#1d4ed8}
+  .btn-ghost{background:var(--surface);color:var(--text);border:1px solid var(--border)}
+  .btn-ghost:hover{border-color:#58a6ff}
+  .hero-stats{display:flex;gap:40px;margin-top:48px}
+  .hero-stat .num{font-size:28px;font-weight:800;letter-spacing:-.02em}
+  .hero-stat .lbl{font-size:13px;color:var(--muted)}
+  .hero-visual{position:relative;z-index:1}
+  .panel{
+    background:var(--surface);border:1px solid var(--border);border-radius:20px;
+    box-shadow:var(--shadow);overflow:hidden;
+  }
+  .panel-bar{display:flex;align-items:center;gap:6px;padding:14px 18px;border-bottom:1px solid var(--border);background:#1c1f26}
+  .panel-bar .pc{width:11px;height:11px;border-radius:50%}
+  .panel-bar .pc:nth-child(1){background:#ff5f57}
+  .panel-bar .pc:nth-child(2){background:#febc2e}
+  .panel-bar .pc:nth-child(3){background:#28c840}
+  .panel-bar .title{margin-left:10px;font-size:12px;color:var(--muted);font-weight:500}
+  .panel-body{padding:22px}
+  .status-row{display:flex;align-items:center;gap:10px;background:var(--primary-soft);border:1px solid #1f6feb33;border-radius:12px;padding:12px 16px;margin-bottom:16px}
+  .status-dot{width:10px;height:10px;border-radius:50%;background:var(--success);position:relative}
+  .status-dot::after{content:'';position:absolute;inset:-4px;border-radius:50%;background:var(--success);opacity:.3;animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{transform:scale(1);opacity:.3}50%{transform:scale(1.6);opacity:.1}}
+  .status-text{font-size:14px;font-weight:600}
+  .status-text small{display:block;font-weight:400;color:var(--muted);font-size:12px}
+  .conn-row{display:flex;justify-content:space-between;align-items:center;padding:12px 4px;border-bottom:1px solid var(--border);font-size:14px}
+  .conn-row:last-child{border-bottom:none}
+  .conn-row .k{color:var(--muted)}
+  .conn-row .v{font-weight:600;color:var(--text)}
+  .status-text{font-size:14px;font-weight:600;color:var(--text)}
+  .badge{font-size:11px;font-weight:700;padding:3px 10px;border-radius:6px}
+  .badge-diamond{background:#2563eb22;color:#58a6ff;border:1px solid #2563eb33}
+  .badge-gold{background:#bb800922;color:#e3b341;border:1px solid #bb800933}
+  .badge-speed{background:#23863622;color:#3fb950;border:1px solid #23863633}
+
+  /* Sections */
+  section{padding:88px 0}
+  .sec-head{text-align:center;max-width:680px;margin:0 auto 56px}
+  .sec-eyebrow{display:inline-block;font-size:13px;font-weight:600;color:var(--primary);letter-spacing:.08em;text-transform:uppercase;margin-bottom:12px}
+  .sec-head h2{font-size:38px;font-weight:800;letter-spacing:-.02em;margin-bottom:14px;line-height:1.2}
+  .sec-head p{font-size:17px;color:var(--muted)}
+
+  /* Comparison */
+  .compare{display:grid;grid-template-columns:1fr 1fr;gap:24px;max-width:900px;margin:0 auto}
+  .comp-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:32px}
+  .comp-card.old{background:#12161c}
+  .comp-title{font-size:15px;font-weight:700;margin-bottom:20px;display:flex;align-items:center;gap:8px;color:var(--text)}
+  .comp-card.old .comp-title{color:var(--muted)}
+  .comp-card.new{border-color:#2563eb66;box-shadow:0 0 0 1px #2563eb33}
+  .comp-list{list-style:none;display:flex;flex-direction:column;gap:14px}
+  .comp-list li{display:flex;gap:10px;font-size:15px;color:var(--muted);align-items:flex-start}
+  .comp-card.new .comp-list li{color:var(--text)}
+  .comp-list .icon{font-size:16px;line-height:1.2}
+  .tagline{margin:56px auto 0;text-align:center;font-size:24px;font-weight:700;letter-spacing:-.01em}
+
+  /* Steps */
+  .steps{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;max-width:1000px;margin:0 auto}
+  .step{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:28px 24px;position:relative}
+  .step-num{width:34px;height:34px;border-radius:10px;background:var(--primary-soft);color:var(--primary);font-weight:700;font-size:15px;display:flex;align-items:center;justify-content:center;margin-bottom:16px}
+  .step h4{font-size:16px;font-weight:700;margin-bottom:8px;color:var(--text)}
+  .step p{font-size:14px;color:var(--muted)}
+  .step-arrow{position:absolute;right:-16px;top:50%;transform:translateY(-50%);color:#cbd5e1;font-size:18px}
+
+  /* Features */
+  .features{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .feature{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:28px;transition:transform .2s,box-shadow .2s}
+  .feature:hover{transform:translateY(-4px);box-shadow:var(--shadow)}
+  .feature .fi{font-size:26px;margin-bottom:16px;display:inline-block}
+  .feature h4{font-size:16px;font-weight:700;margin-bottom:8px;color:var(--text)}
+  .feature p{font-size:14px;color:var(--muted)}
+
+  /* Screenshots */
+  .shots{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;max-width:1000px;margin:0 auto}
+  .shot{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);transition:transform .2s,box-shadow .2s}
+  .shot:hover{transform:translateY(-4px);box-shadow:0 12px 32px rgba(0,0,0,.4)}
+  .shot img{width:100%;display:block;aspect-ratio:16/10;object-fit:cover;background:#1c1f26}
+  .shot figcaption{padding:12px 16px;font-size:13px;font-weight:500;color:var(--muted)}
+
+  /* Use cases */
+  .cases{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;max-width:1000px;margin:0 auto}
+  .case{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:28px 24px;text-align:center}
+  .case .ci{font-size:30px;margin-bottom:12px}
+  .case h4{font-size:15px;font-weight:700;margin-bottom:6px;color:var(--text)}
+  .case p{font-size:13px;color:var(--muted)}
+
+  /* Products */
+  .products{display:flex;justify-content:center;align-items:center;gap:12px;flex-wrap:wrap;max-width:900px;margin:0 auto}
+  .prod{background:var(--surface);border:1px solid var(--border);border-radius:999px;padding:12px 26px;font-weight:600;font-size:15px;display:flex;align-items:center;gap:8px;color:var(--text)}
+  .prod .dot{width:6px;height:6px;border-radius:50%;background:var(--primary)}
+  .prod-arrow{color:#3d444d;font-size:20px}
+
+  /* Pricing */
+  .pricing{max-width:760px;margin:0 auto}
+  .price-card{background:var(--surface);border:1px solid var(--border);border-radius:24px;overflow:hidden;box-shadow:var(--shadow)}
+  .price-head{background:var(--primary-soft);border-bottom:1px solid #1f6feb33;color:var(--text);padding:28px 32px}
+  .price-head h3{font-size:22px;font-weight:800;margin-bottom:6px}
+  .price-head p{font-size:14px;color:var(--muted)}
+  .price-body{padding:28px 32px}
+  .pricing table{width:100%;border-collapse:collapse;font-size:15px}
+  .pricing th{text-align:left;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;padding:10px 12px;border-bottom:1px solid var(--border);background:var(--surface-2)}
+  .pricing td{padding:13px 12px;border-bottom:1px solid #21262d}
+  .pricing tr:last-child td{border-bottom:none}
+  .pricing .plan{font-weight:700;color:var(--text)}
+  .pricing .price{font-weight:800;color:var(--primary);font-size:17px}
+  .pricing .trial{color:#f0883e}
+  .pricing .hit td{background:var(--primary-soft)}
+  .pricing .hit .plan{color:var(--primary)}
+  .price-note{margin-top:16px;font-size:13px;color:var(--muted);text-align:center}
+
+  /* CTA */
+  .cta-section{background:var(--primary-soft);border:1px solid #1f6feb33;border-radius:28px;padding:64px 40px;text-align:center}
+  .cta-section h2{font-size:36px;font-weight:800;letter-spacing:-.02em;margin-bottom:16px;color:var(--text)}
+  .cta-section h2 .gradient{background:linear-gradient(90deg,#2563eb,#7c3aed);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .cta-section p{font-size:17px;color:var(--muted);max-width:560px;margin:0 auto 32px}
+  .cta-btns{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+  .cta-btns .btn-white{background:var(--primary-deep);color:#fff;font-weight:700}
+  .cta-btns .btn-white:hover{background:#1d4ed8}
+  .cta-btns .btn-ghost-white{background:transparent;color:var(--primary);border:1.5px solid #2563eb66}
+  .cta-btns .btn-ghost-white:hover{background:rgba(37,99,235,.08)}
+
+  /* FAQ */
+  .faq{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+  .faq-item{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+  .faq-q{padding:18px 22px;font-weight:600;font-size:15px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;user-select:none;color:var(--text)}
+  .faq-q .plus{color:var(--muted);font-size:18px;transition:transform .2s}
+  .faq-item.open .faq-q .plus{transform:rotate(45deg)}
+  .faq-a{max-height:0;overflow:hidden;transition:max-height .3s ease}
+  .faq-item.open .faq-a{max-height:200px}
+  .faq-a p{padding:0 22px 18px;font-size:14px;color:var(--muted)}
+
+  /* Footer */
+  .footer{border-top:1px solid var(--border);padding:40px 0;text-align:center}
+  .footer .flogo{display:flex;justify-content:center;align-items:center;gap:8px;font-weight:700;font-size:16px;margin-bottom:8px;color:var(--text)}
+  .footer .flogo .logo-mark{width:22px;height:22px;font-size:11px;border-radius:7px}
+  .footer .sub{font-size:12px;color:var(--muted);max-width:600px;margin:0 auto;line-height:1.8}
+
+  @media (max-width:900px){
+    .hero{padding:64px 0 56px}
+    .hero h1{font-size:40px}
+    .hero-grid{grid-template-columns:1fr;gap:40px}
+    .nav-links{display:none}
+    .hamburger{display:block}
+    .features,.cases{grid-template-columns:1fr 1fr}
+    .steps{grid-template-columns:1fr 1fr}
+    .step-arrow{display:none}
+    .shots{grid-template-columns:1fr 1fr}
+  }
+  @media (max-width:600px){
+    .hero h1{font-size:32px}
+    .hero-stats{gap:24px;flex-wrap:wrap}
+    .features,.cases,.steps{grid-template-columns:1fr}
+    .compare{grid-template-columns:1fr}
+    .sec-head h2{font-size:30px}
+  }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="container nav-inner">
+    <div class="logo">
+      <div class="logo-mark">🔷</div>
+      <div>
+        <div>EVG</div>
+        <div class="logo-sub">Adaptive Connection Platform</div>
+      </div>
+    </div>
+    <div class="nav-links">
+      <a href="#why">为什么选它</a>
+      <a href="#how">怎么工作</a>
+      <a href="#features">核心能力</a>
+      <a href="#pricing">定价</a>
+      <a href="#faq">FAQ</a>
+      <a href="https://t.me/long4638" target="_blank" rel="noopener" class="nav-cta">私聊咨询</a>
+    </div>
+    <button class="hamburger" onclick="document.querySelector('.nav-links').style.display='flex'">☰</button>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="hero-bg"></div>
+  <div class="container">
+    <div class="hero-grid">
+      <div class="hero-text">
+        <span class="hero-eyebrow"><span class="dot"></span> 自部署 · 永久买断 · 断线自愈</span>
+        <h1>让网络适应你，<br>而不是让你适应网络。</h1>
+        <p class="hero-sub">智能选择线路、自动优化连接、断线秒级自愈。你负责工作，EVG 负责连接。</p>
+        <div class="hero-ctas">
+          <a href="https://t.me/long4638" target="_blank" rel="noopener" class="btn btn-primary">立即咨询</a>
+          <a href="#pricing" class="btn btn-ghost">查看定价 →</a>
+        </div>
+        <div class="hero-stats">
+          <div class="hero-stat"><div class="num">0元</div><div class="lbl">年 IP 采购成本</div></div>
+          <div class="hero-stat"><div class="num">秒级</div><div class="lbl">断线自愈速度</div></div>
+          <div class="hero-stat"><div class="num">3分钟</div><div class="lbl">部署完成</div></div>
+        </div>
+      </div>
+      <div class="hero-visual">
+        <div class="panel">
+          <div class="panel-bar">
+            <span class="pc"></span><span class="pc"></span><span class="pc"></span>
+            <span class="title">EVG 控制面板</span>
+          </div>
+          <div class="panel-body">
+            <div class="status-row">
+              <span class="status-dot"></span>
+              <div class="status-text">连接正常 · 已自愈
+                <small>当前线路：日本 · 东京 · 钻石级</small>
+              </div>
+            </div>
+            <div class="conn-row"><span class="k">连接质量</span><span class="v">优秀</span></div>
+            <div class="conn-row"><span class="k">当前 IP</span><span class="v">日本·东京</span></div>
+            <div class="conn-row"><span class="k">线路等级</span><span><span class="badge badge-diamond">钻石级</span> <span class="badge badge-gold">黄金级</span> <span class="badge badge-speed">极速</span></span></div>
+            <div class="conn-row"><span class="k">连接时长</span><span class="v">6小时 12分</span></div>
+            <div class="conn-row"><span class="k">自动恢复</span><span class="v" style="color:var(--success)">已开启</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section id="why">
+  <div class="container">
+    <div class="sec-head">
+      <span class="sec-eyebrow">Why EVG</span>
+      <h2>传统代理只负责连接，EVG 负责持续保持最佳连接</h2>
+      <p>别再每天测速、选线路、换 IP 了。把网络交给系统，把时间留给工作。</p>
+    </div>
+    <div class="compare">
+      <div class="comp-card old">
+        <div class="comp-title">❌ 传统代理</div>
+        <ul class="comp-list">
+          <li><span class="icon">🔧</span> 自己选节点</li>
+          <li><span class="icon">⏱️</span> 自己反复测速</li>
+          <li><span class="icon">🔄</span> 断线后手动换线</li>
+          <li><span class="icon">🛠️</span> 自己维护线路</li>
+          <li><span class="icon">💰</span> 每月为 IP 付费</li>
+        </ul>
+      </div>
+      <div class="comp-card new">
+        <div class="comp-title">✅ EVG 自适应连接</div>
+        <ul class="comp-list">
+          <li><span class="icon">🤖</span> 系统自动选线路</li>
+          <li><span class="icon">📊</span> 后台持续测速评分</li>
+          <li><span class="icon">⚡</span> 断线秒级自愈</li>
+          <li><span class="icon">🛡️</span> 后台自动维护</li>
+          <li><span class="icon">🆓</span> IP 成本归零</li>
+        </ul>
+      </div>
+    </div>
+    <div class="tagline">用户负责工作，EVG 负责连接。</div>
+  </div>
+</section>
+
+<section id="how" style="background:#0d1117;border-top:1px solid var(--border);border-bottom:1px solid var(--border)">
+  <div class="container">
+    <div class="sec-head">
+      <span class="sec-eyebrow">How it works</span>
+      <h2>背后很复杂，操作很简单</h2>
+      <p>所有判断都在后台完成，你只需要做一件事——点击连接。</p>
+    </div>
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><h4>点击连接</h4><p>打开插件或客户端，点击「智能连接」</p><span class="step-arrow">→</span></div>
+      <div class="step"><div class="step-num">2</div><h4>后台评分</h4><p>系统综合分析线路质量、稳定性与场景匹配度</p><span class="step-arrow">→</span></div>
+      <div class="step"><div class="step-num">3</div><h4>智能选择</h4><p>自动为你选择当前最合适的一条线路</p><span class="step-arrow">→</span></div>
+      <div class="step"><div class="step-num">4</div><h4>持续优化</h4><p>连接后持续监测，异常时自动恢复</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="features">
+  <div class="container">
+    <div class="sec-head">
+      <span class="sec-eyebrow">Core Capabilities</span>
+      <h2>六项核心能力，解决跨境防关联的核心问题</h2>
+      <p>不是功能堆砌，而是围绕「稳定、省心、低成本」设计。</p>
+    </div>
+    <div class="features">
+      <div class="feature"><span class="fi">🛡️</span><h4>断线秒级自愈</h4><p>主线路断线后，系统自动在同城同运营商范围内匹配替补。找不到就宁可死等原线路恢复，绝不跨城乱跳，平台无感知。</p></div>
+      <div class="feature"><span class="fi">💰</span><h4>零成本无限扩容</h4><p>系统自动采集全球真实住宅线路，不按流量、不按线路数收费。管理 5 个店和 500 个店，网络成本都是 0。</p></div>
+      <div class="feature"><span class="fi">💎</span><h4>三层质量分级</h4><p><span class="badge badge-diamond">钻石</span> 双重风控检测极品线路 · <span class="badge badge-gold">黄金</span> 多轮探活验证线路 · <span class="badge badge-speed">极速</span> 住宅级延迟优选</p></div>
+      <div class="feature"><span class="fi">🔄</span><h4>原配线路永久化</h4><p>锁定的优质线路断线后，系统死等不乱换。一旦原线路在全球任意位置重新上线，秒切回来，用户端无感知。</p></div>
+      <div class="feature"><span class="fi">🔐</span><h4>内核级防泄露</h4><p>网卡焊死 + 双栈防火墙，断线 0.001 秒锁死所有出海通道，杜绝毫秒级泄露导致的封店。</p></div>
+      <div class="feature"><span class="fi">🔍</span><h4>内置 IP 质检</h4><p>买线路前先跑一遍风控检测。市面上不少"挂羊头卖狗肉"的垃圾线路，一测便知。</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="screens">
+  <div class="container">
+    <div class="sec-head">
+      <span class="sec-eyebrow">Real Screenshots</span>
+      <h2>真实运行截图，眼见为实</h2>
+      <p>不是概念图，是系统真实运行界面、IP 质量检测与 VPS 部署实况。</p>
+    </div>
+    <div class="shots">
+      <figure class="shot">
+        <img src="images/面板.png" alt="EVG 控制面板" loading="lazy">
+        <figcaption>控制面板 · 线路/状态/一键换线</figcaption>
+      </figure>
+      <figure class="shot">
+        <img src="images/检测.png" alt="IP 质量检测" loading="lazy">
+        <figcaption>IP 质量检测 · 买线前先自测</figcaption>
+      </figure>
+      <figure class="shot">
+        <img src="images/欺诈值2.png" alt="欺诈值检测" loading="lazy">
+        <figcaption>风控欺诈值检测 · 避开高风险线路</figcaption>
+      </figure>
+      <figure class="shot">
+        <img src="images/vps.png" alt="VPS 部署" loading="lazy">
+        <figcaption>VPS 部署实况 · 2 条命令 3 分钟</figcaption>
+      </figure>
+      <figure class="shot">
+        <img src="images/scamalytics检测.png" alt="Scamalytics 检测" loading="lazy">
+        <figcaption>Scamalytics 风控检测结果</figcaption>
+      </figure>
+      <figure class="shot">
+        <img src="images/rw面板1-87.png" alt="面板运行状态" loading="lazy">
+        <figcaption>实时运行状态 · 自动自愈记录</figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<section id="cases" style="background:#0d1117;border-top:1px solid var(--border);border-bottom:1px solid var(--border)">
+  <div class="container">
+    <div class="sec-head">
+      <span class="sec-eyebrow">Who it's for</span>
+      <h2>适合这些场景与人群</h2>
+      <p>一套系统，适配不同需求，而非一套方案通吃所有人。</p>
+    </div>
+    <div class="cases">
+      <div class="case"><div class="ci">🤖</div><h4>AI 办公</h4><p>稳定访问 ChatGPT、Claude、Gemini</p></div>
+      <div class="case"><div class="ci">🛒</div><h4>跨境运营</h4><p>TikTok、Amazon、Facebook、Google Ads</p></div>
+      <div class="case"><div class="ci">🏢</div><h4>企业办公</h4><p>远程办公、团队统一策略管理</p></div>
+      <div class="case"><div class="ci">🌍</div><h4>普通用户</h4><p>浏览网页、学习、视频、娱乐</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="pricing">
+  <div class="container">
+    <div class="sec-head">
+      <span class="sec-eyebrow">Pricing</span>
+      <h2>一次买断，永久使用</h2>
+      <p>基础功能永久可用，可选年度更新包获取升级与线路库刷新。</p>
+    </div>
+    <div class="pricing">
+      <div class="price-card">
+        <div class="price-head">
+          <h3>💎 专业版及以上 · 永久买断</h3>
+          <p>包含钻石 + 黄金 + 极速全部线路等级，支持代部署（+¥100-300）</p>
+        </div>
+        <div class="price-body">
+          <table>
+            <thead><tr><th>版本</th><th>环境数</th><th>买断价</th><th>年度更新</th></tr></thead>
+            <tbody>
+              <tr><td class="plan">🎯 体验版</td><td>1 环境</td><td class="price trial">¥19.9/月</td><td>试用</td></tr>
+              <tr><td class="plan">🔶 入门版</td><td>1 环境</td><td class="price">¥199</td><td>¥69/年</td></tr>
+              <tr><td class="plan">🔷 标准版</td><td>3 环境</td><td class="price">¥499</td><td>¥99/年</td></tr>
+              <tr><td class="plan">💎 专业版</td><td>5 环境</td><td class="price">¥699</td><td>¥149/年</td></tr>
+              <tr class="hit"><td class="plan">🏆 旗舰版</td><td>10 环境</td><td class="price">¥1,099</td><td>¥249/年</td></tr>
+              <tr><td class="plan">👑 超级版</td><td>20 环境</td><td class="price">¥1,899</td><td>¥349/年</td></tr>
+              <tr><td class="plan">🚀 无限版</td><td>无限</td><td class="price">¥3,999</td><td>¥449/年</td></tr>
+            </tbody>
+          </table>
+          <div class="price-note">✅ 全部买断方案含钻石/黄金/极速线路 · 代部署 +¥100-300 · 付费用户专享极速版线路</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="faq" style="background:#0d1117;border-top:1px solid var(--border);border-bottom:1px solid var(--border)">
+  <div class="container">
+    <div class="sec-head">
+      <span class="sec-eyebrow">FAQ</span>
+      <h2>常见问题</h2>
+    </div>
+    <div class="faq">
+      <div class="faq-item">
+        <div class="faq-q">和指纹浏览器是什么关系？<span class="plus">+</span></div>
+        <div class="faq-a"><p>指纹浏览器管「浏览器环境隔离」，EVG 管「底层线路调度」，两者搭配使用效果最佳。EVG 也可以独立使用（配合桌面客户端或手机客户端）。</p></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">断线了怎么办？<span class="plus">+</span></div>
+        <div class="faq-a"><p>系统内置自愈机制——主线路断线后自动在同城同运营商范围内匹配替补，找不到就死等原线路恢复。平台看来你就是一个偶尔断电重启路由器的真实住户。</p></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">我不懂技术，能用吗？<span class="plus">+</span></div>
+        <div class="faq-a"><p>可以。提供代部署服务（+¥100-300），帮你装好、调通、交付。或者按教程执行 2 条命令即可完成安装。</p></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">一次买断真的永久吗？<span class="plus">+</span></div>
+        <div class="faq-a"><p>基础功能永久可用。年度更新包（非必须）提供：系统版本升级 + 线路库持续刷新 + 新功能解锁。</p></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">支持哪些国家的线路？<span class="plus">+</span></div>
+        <div class="faq-a"><p>覆盖全球多个主流国家/地区，包括日本、韩国、美国、欧洲等。系统会根据你的目标市场自动优选最佳线路。</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="container" style="padding-bottom:96px">
+  <div class="cta-section">
+    <h2><span class="gradient">把时间留给工作，把连接交给 EVG。</span></h2>
+    <p>告别 IP 焦虑，1 核 1G 即可运行，3 分钟部署完成，一次买断永久使用。</p>
+    <div class="cta-btns">
+      <a href="https://t.me/long4638" target="_blank" rel="noopener" class="btn btn-white">私聊下单</a>
+      <a href="https://t.me/long4638" target="_blank" rel="noopener" class="btn btn-ghost-white">Telegram 咨询</a>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container">
+    <div class="flogo"><div class="logo-mark">🔷</div> EVG · Adaptive Connection Platform</div>
+    <div class="sub">EVG 跨境电商多店铺防关联系统 · 自部署 · 永久使用 · 断线自愈<br>本系统仅用于合法商业用途，请遵守当地法律法规。<br><br>咨询下单：微信 <strong>winner2227</strong> ｜ Telegram <strong>@long4638</strong></div>
+  </div>
+</footer>
+
+<script>
+  // FAQ accordion
+  document.querySelectorAll('.faq-q').forEach(function(q){
+    q.addEventListener('click',function(){
+      var item=q.parentElement;
+      var isOpen=item.classList.contains('open');
+      // close all
+      document.querySelectorAll('.faq-item').forEach(function(i){i.classList.remove('open')});
+      // toggle clicked
+      if(!isOpen)item.classList.add('open');
+    });
+  });
+  // nav mobile toggle
+  document.querySelector('.hamburger').addEventListener('click',function(){
+    var l=document.querySelector('.nav-links');
+    l.style.display = l.style.display==='flex' ? 'none' : 'flex';
+    l.style.flexDirection='column'; l.style.alignItems='flex-start'; l.style.padding='16px 0';
+  });
+</script>
+</body>
+</html>
